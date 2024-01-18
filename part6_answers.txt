@@ -1,0 +1,11 @@
+1. RGB values seems to give better tracking results compared to HSV values. 
+However, this might be due to a difference in the threshold range in two methods. 
+For a dark blue object, my HSV range is [110,50,50] to [130,255,255]; my RGB range is [25,25,100] to [100,100,255]. 
+
+2. More lights were turned on during this test. HSV is significantly better at tracking the object than RGB under this lighting condition. 
+The object can be easily picked out with HSV values under many angles, while it was almost impossible to track the same object using RGB values under this lighting condition. 
+
+3. My code is better able to pick out the color displayed by my phone compared to an actual object with a similar color. 
+However, changing my phone's brightness does not seem to affect the ability of my code to track the color. The color can be tracked fairly well under the lowest and the highest brightness settings on my phone screen. 
+
+4. My phone is a lot more robust to brightness. The colors detected in k-means are largely the same under different brightness settings using phone display. On the other hand, vastly different colors are detected from the object when brightness is different. 
