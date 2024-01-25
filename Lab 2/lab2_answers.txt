@@ -1,0 +1,2 @@
+Task 1: 
+MQTT can be used for sensors and microcontrollers to communicate with each other or with a computer during the game. 

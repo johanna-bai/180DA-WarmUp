@@ -1,3 +1,6 @@
+# When run at the same time as mqtt_ping_1.py, the two programs ping-pong each other 
+# a counter that increments each time they receive a message 
+# mqtt_ping_2.py sets off this chain and sends the initial message
 import paho.mqtt.client as mqtt
 import time
 import numpy as np
@@ -7,7 +10,7 @@ import numpy as np
 def on_connect(client, userdata, flags, rc):
     print("Connection returned result: " + str(rc))
     client.subscribe("ece180d/test/team6/#", qos=1)
-    client.publish("ece180d/test/team6/1", "hi this is johanna", qos=1)
+    client.publish("ece180d/test/team6/3", 0, qos=1)
 
 # Subscribing in on_connect() means that if we lose the connection and
 # reconnect then subscriptions will be renewed.
@@ -24,10 +27,12 @@ def on_message(client, userdata, message):
     time.sleep(1)
     #print(message.topic)
     topic = int(message.topic.split('/')[-1])
-    if topic != 1:
+    if topic != 3:
         print('Received message: "' + str(message.payload) + '" on topic "' + message.topic + '" with QoS ' + str(message.qos))
-        print('Publishing...')
-        client.publish("ece180d/test/team6/1", "received" , qos=1)
+        #if (message.payload).isnumeric:  
+        num = int((message.payload)) + 1
+        client.publish("ece180d/test/team6/3", num , qos=1)
+        print("sent message: " + str(num))
 
 # 1. create a client instance.
 client = mqtt.Client()
