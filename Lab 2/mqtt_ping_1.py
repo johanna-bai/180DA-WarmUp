@@ -9,8 +9,7 @@ import numpy as np
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
     print("Connection returned result: " + str(rc))
-    client.subscribe("ece180d/test/team6/#", qos=1)
-    client.publish("ece180d/test/team6/2", "hi this is johanna", qos=1)
+    client.subscribe("ece180d/test/johanna/#", qos=1)
 
 # Subscribing in on_connect() means that if we lose the connection and
 # reconnect then subscriptions will be renewed.
@@ -21,17 +20,16 @@ def on_disconnect(client, userdata, rc):
         print('Unexpected Disconnect')
     else:
         print('Expected Disconnect')
-# The default message callback.
-# (won’t be used if only publishing, but can still exist)
+
+
 def on_message(client, userdata, message):
     time.sleep(1)
-    #print(message.topic)
     topic = int(message.topic.split('/')[-1])
     if topic != 2:
         print('Received message: "' + str(message.payload) + '" on topic "' + message.topic + '" with QoS ' + str(message.qos))
         #if (message.payload).isnumeric:  
         num = int((message.payload)) + 1
-        client.publish("ece180d/test/team6/2", num , qos=1)
+        client.publish("ece180d/test/johanna/2", num , qos=1)
         print("sent message: " + str(num))
 
 # 1. create a client instance.
