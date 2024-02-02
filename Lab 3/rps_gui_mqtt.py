@@ -1,18 +1,21 @@
 import pygame
-import random
+import paho.mqtt.client as mqtt
 import sys
 import os
-import time 
+
+global opponent_choice
+global wins
+global losses
 
 pygame.init()
-
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-RED = (255, 0, 0)
 
 WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Rock, Paper, Scissors")
+
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
 
 font = pygame.font.Font(None, 36)
 
@@ -24,6 +27,19 @@ rock = pygame.transform.scale(rock, (120, 120))
 paper = pygame.transform.scale(paper, (120, 120))
 scissors = pygame.transform.scale(scissors, (120, 120))
 
+wins = 0
+losses = 0
+opponent_choice = None
+client = mqtt.Client()
+
+def on_message(client, userdata, message):
+    global opponent_choice
+    opponent_choice = message.payload.decode()
+
+def on_connect(client, userdata, flags, rc):
+    print("Connected with result code " + str(rc))
+    client.subscribe('rps/game/player2', qos=1)
+
 def write_text(text, colour, x, y):
     text_surface = font.render(text, True, colour)
     screen.blit(text_surface, (x, y))
@@ -33,13 +49,14 @@ def draw_button(text, button_colour, text_colour, x, y, width, height):
     pygame.draw.rect(screen, button_colour, button)
     write_text(text, text_colour, x, y)
 
-def get_user_choice():
+def get_player_choice():
     screen.fill(WHITE)
     write_text("Choose rock, paper, or scissors", RED, 220, 50)
     screen.blit(rock, (140, 240))
     screen.blit(paper, (340, 240))
     screen.blit(scissors, (540, 240))
     pygame.display.flip()
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -56,38 +73,51 @@ def get_user_choice():
                 elif 540 <= x <= 660 and 240 <= y <= 360:
                     print("scissors")
                     return "scissors"
-                
-def get_opponent_choice():
-    return random.choice(["rock", "paper", "scissors"])
 
-def determine_winner(user_choice, opponent_choice):
-    if user_choice == opponent_choice:
+def determine_winner(player_choice, opponent_choice):
+    global wins 
+    global losses
+    if player_choice == opponent_choice:
         return "It's a tie!"
-    elif (
-        (user_choice == "rock" and opponent_choice == "scissors") or
-        (user_choice == "paper" and opponent_choice == "rock") or
-        (user_choice == "scissors" and opponent_choice == "paper")
-    ):
-        return "You win!"
+    elif (player_choice == "rock" and opponent_choice == "scissors") or \
+         (player_choice == "paper" and opponent_choice == "rock") or \
+         (player_choice == "scissors" and opponent_choice == "paper"):
+        wins += 1
+        return "You win! Opponent chose " + opponent_choice
     else:
-        return "You lose!"
+        losses += 1
+        return "You lose! Opponent chose " + opponent_choice
 
 def main():
+    global opponent_choice
+    global wins
+    global losses
+
+    client.on_connect = on_connect 
+    client.on_message = on_message
+    client.connect_async('mqtt.eclipseprojects.io')
+    client.loop_start()
+
     while True:
-        user_choice = get_user_choice()
-        opponent_choice = get_opponent_choice()
-        print(opponent_choice)
+
+        player_choice = get_player_choice()
+        client.publish('rps/game/player1', player_choice)
+
+        while opponent_choice is None: 
+            screen.fill(WHITE)
+            write_text("Waiting for opponent...", BLACK, 220, 300)
+            pygame.display.flip()
+
         pygame.display.flip()
-
         screen.fill(WHITE)
-        write_text(f"You chose {user_choice}.", BLACK, 100, 100)
+        result = determine_winner(player_choice, opponent_choice)
+        write_text(f"You chose {player_choice}.", BLACK, 100, 100)
         write_text(f"Opponent chose {opponent_choice}.", BLACK, 100, 200)
-        result = determine_winner(user_choice, opponent_choice)
         write_text(result, BLACK, 100, 300)
-        print(result)
-
-        draw_button("Quit", BLACK, WHITE, 100, 400, 100, 50)
-        draw_button("Play Again", BLACK, WHITE, 500, 400, 200, 50)
+        write_text(f"Wins: {wins}.", BLACK, 100, 400)
+        write_text(f"Losses: {losses}.", BLACK, 300, 400)
+        draw_button("Quit", BLACK, WHITE, 100, 500, 100, 50)
+        draw_button("Play Again", BLACK, WHITE, 500, 500, 200, 50)
         pygame.display.flip()  
 
         while True:
@@ -98,14 +128,17 @@ def main():
                     sys.exit()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     x, y = event.pos
-                    if 100 <= x <= 200 and 400 <= y <= 450:
+                    if 100 <= x <= 200 and 500 <= y <= 550:
                         pygame.quit()
                         sys.exit()
-                    elif 500 <= x <= 700 and 400 <= y <= 450:
+                    elif 500 <= x <= 700 and 500 <= y <= 550:
                         again = 1
                         break
             if again == 1:
                 break
+        pygame.display.flip()
+
+        opponent_choice = None
 
 if __name__ == "__main__":
     main()
