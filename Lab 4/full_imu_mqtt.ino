@@ -115,25 +115,25 @@ void loop() {
     // printRawAGMT( myICM.agmt ); // Uncomment this to see the raw values, taken directly from the agmt structure
     printScaledAGMT(&myICM); // This function takes into account the scale settings from when
                              // the measurement was made to calculate the values with units
-    //client.publish(topic, myICM->acc.axes.x);
-    // client.loop();
-    // delay(30);
+     //client.publish(topic, myICM->acc.axes.x);
+     client.loop();
+     delay(30);
 
-    int16_t ax = mpu.getAccelerationX();
-    int16_t ay = mpu.getAccelerationY();
-    int16_t az = mpu.getAccelerationZ();
-    int16_t gx = mpu.getRotationX();
-    int16_t gy = mpu.getRotationY();
-    int16_t gz = mpu.getRotationZ();
-
-    // Create JSON payload
-    String payload = "{\"acceleration\":{\"x\":" + String(ax) + ",\"y\":" + String(ay) + ",\"z\":" + String(az) +
-                    "},\"gyroscope\":{\"x\":" + String(gx) + ",\"y\":" + String(gy) + ",\"z\":" + String(gz) + "}}";
-
-    // Publish data to MQTT topic
-    client.publish("imu_data", payload.c_str());
-    client.loop();
-    delay(30);
+//    int16_t ax = myICM.accX();
+//    int16_t ay = myICM.accY();
+//    int16_t az = myICM.accZ();
+//    int16_t gx = myICM.gyrX();
+//    int16_t gy = myICM.gyrY();
+//    int16_t gz = myICM.gyrZ();
+//
+//    // Create JSON payload
+//    String payload = "{\"acceleration\":{\"x\":" + String(ax) + ",\"y\":" + String(ay) + ",\"z\":" + String(az) +
+//                    "},\"gyroscope\":{\"x\":" + String(gx) + ",\"y\":" + String(gy) + ",\"z\":" + String(gz) + "}}";
+//
+//    // Publish data to MQTT topic
+//    client.publish(topic1, payload.c_str());
+//    client.loop();
+//    delay(30);
 
 
   } else {
@@ -238,21 +238,41 @@ void printScaledAGMT(ICM_20948_SPI *sensor) {
 #else
 void printScaledAGMT(ICM_20948_I2C *sensor) {
 #endif
+
+  float ax = myICM.accX();
+  float ay = myICM.accY();
+  float az = myICM.accZ();
+  float gx = myICM.gyrX();
+  float gy = myICM.gyrY();
+  float gz = myICM.gyrZ();
+
   SERIAL_PORT.print("Scaled. Acc (mg) [ ");
-  printFormattedFloat(sensor->accX(), 5, 2);
-  char buf[10];
-  snprintf(buf, 10, "%f", sensor->accX());
-  client.publish(topic1, buf);
+  printFormattedFloat(ax, 5, 2);
+  char buf1[10];
+  snprintf(buf1, 10, "%f", ax);
+//  client.publish(topic1, buf);
   SERIAL_PORT.print(", ");
-  printFormattedFloat(sensor->accY(), 5, 2);
+  printFormattedFloat(ay, 5, 2);
+  char buf2[10];
+  snprintf(buf2, 10, "%f", ay);
   SERIAL_PORT.print(", ");
-  printFormattedFloat(sensor->accZ(), 5, 2);
+  printFormattedFloat(az, 5, 2);
+  char buf3[10];
+  snprintf(buf3, 10, "%f", az);
+  
   SERIAL_PORT.print(" ], Gyr (DPS) [ ");
-  printFormattedFloat(sensor->gyrX(), 5, 2);
+  printFormattedFloat(gx, 5, 2);
+  char buf4[10];
+  snprintf(buf4, 10, "%f", gx);
   SERIAL_PORT.print(", ");
-  printFormattedFloat(sensor->gyrY(), 5, 2);
+  printFormattedFloat(gy, 5, 2);
+  char buf5[10];
+  snprintf(buf5, 10, "%f", gy);
   SERIAL_PORT.print(", ");
-  printFormattedFloat(sensor->gyrZ(), 5, 2);
+  printFormattedFloat(gz, 5, 2);
+  char buf6[10];
+  snprintf(buf6, 10, "%f", gz);
+  
   SERIAL_PORT.print(" ], Mag (uT) [ ");
   printFormattedFloat(sensor->magX(), 5, 2);
   SERIAL_PORT.print(", ");
@@ -263,4 +283,17 @@ void printScaledAGMT(ICM_20948_I2C *sensor) {
   printFormattedFloat(sensor->temp(), 5, 2);
   SERIAL_PORT.print(" ]");
   SERIAL_PORT.println();
+
+
+    // Create JSON payload
+    String payload = "{\"acceleration\":{\"x\":" + String(buf1) + ", \"y\":" + String(buf2) + ", \"z\":" + String(buf3) +
+                    "},\"gyroscope\":{\"x\":" + String(buf4) + ",\"y\":" + String(buf5) + ",\"z\":" + String(buf6) + "}}";
+
+
+    // Publish data to MQTT topic
+    client.publish(topic1, payload.c_str());
+    client.loop();
+    delay(30);
+
+  
 }

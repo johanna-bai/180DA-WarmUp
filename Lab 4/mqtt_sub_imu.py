@@ -1,13 +1,11 @@
-#Given code for subscriber
 import paho.mqtt.client as mqtt
 import time
+import json
 
-# 0. define callbacks - functions that run when events happen.
-# The callback for when the client receives a CONNACK response from the server.
+data = []
+
 def on_connect(client, userdata, flags, rc):
     print("Connection returned result: " + str(rc))
-    # Subscribing in on_connect() means that if we lose the connection and
-    # reconnect then subscriptions will be renewed.
     client.subscribe("ece180d/test/team6/#", qos=1)
 
 # The callback of the client when it disconnects.
@@ -17,40 +15,46 @@ def on_disconnect(client, userdata, rc):
     else:
         print('Expected Disconnect')
 
-# The default message callback.
-# (you can create separate callbacks per subscribed topic)
 def on_message(client, userdata, message):
     mes = message.payload
-    print(mes.decode('utf-8'))
+    mes_decoded = mes.decode()
 
-# 1. create a client instance.
+    try:
+        data.append(json.loads(mes_decoded))
+        if len(data) > 10:
+            data.pop(0)
+            forward = all(sample['acceleration']['x'] > 70 for sample in data[-5:])
+            up = all(sample['acceleration']['z'] < 980 for sample in data[-5:])
+            circle = (sum(sample['gyroscope']['x'] * 0.075 for sample in data) > 360 
+                    or sum(sample['gyroscope']['z'] * 0.075 for sample in data) < -360)
+            idle = all(sample['acceleration']['x']< 50 
+                       and sample['acceleration']['y'] < 50 
+                       and sample['acceleration']['z'] > 990 
+                       and sample['acceleration']['z'] < 1030 for sample in data)
+
+            if forward:
+                print("forward")
+            if up:
+                print("up")
+            if circle:
+                print("circle")
+            if idle:
+                print("idle")
+
+    except json.JSONDecodeError as e:
+        print(f"Error decoding JSON: {e}")
+
+
 client = mqtt.Client()
-# add additional client options (security, certifications, etc.)
-# many default options should be good to start off.
-# add callbacks to client.
 client.on_connect = on_connect
 client.on_disconnect = on_disconnect
 client.on_message = on_message
 
-# 2. connect to a broker using one of the connect*() functions.
-# client.connect_async("test.mosquitto.org")
 client.connect_async('mqtt.eclipseprojects.io')
-# client.connect("test.mosquitto.org", 1883, 60)
-# client.connect("mqtt.eclipse.org")
-
-# 3. call one of the loop*() functions to maintain network traffic flow with the broker.
 client.loop_start()
-# client.loop_forever()
 
-
-while True: # perhaps add a stopping condition using some break or something.
-    #time.sleep(3)# do your non-blocked other stuff here, like receive IMU data or something.
-    #break
+while True: 
     pass
-# use subscribe() to subscribe to a topic and receive messages.
 
-# use publish() to publish messages to the broker.
-
-# use disconnect() to disconnect from the broker.
 client.loop_stop()
 client.disconnect()
