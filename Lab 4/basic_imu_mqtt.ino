@@ -115,27 +115,9 @@ void loop() {
     // printRawAGMT( myICM.agmt ); // Uncomment this to see the raw values, taken directly from the agmt structure
     printScaledAGMT(&myICM); // This function takes into account the scale settings from when
                              // the measurement was made to calculate the values with units
-    //client.publish(topic, myICM->acc.axes.x);
-    // client.loop();
-    // delay(30);
-
-    int16_t ax = mpu.getAccelerationX();
-    int16_t ay = mpu.getAccelerationY();
-    int16_t az = mpu.getAccelerationZ();
-    int16_t gx = mpu.getRotationX();
-    int16_t gy = mpu.getRotationY();
-    int16_t gz = mpu.getRotationZ();
-
-    // Create JSON payload
-    String payload = "{\"acceleration\":{\"x\":" + String(ax) + ",\"y\":" + String(ay) + ",\"z\":" + String(az) +
-                    "},\"gyroscope\":{\"x\":" + String(gx) + ",\"y\":" + String(gy) + ",\"z\":" + String(gz) + "}}";
-
-    // Publish data to MQTT topic
-    client.publish("imu_data", payload.c_str());
+    // client.publish(topic, myICM->acc.axes.x);
     client.loop();
-    delay(30);
-
-
+    delay(500);
   } else {
     SERIAL_PORT.println("Waiting for data");
     client.loop();

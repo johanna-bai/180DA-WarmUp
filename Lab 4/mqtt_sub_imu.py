@@ -21,7 +21,7 @@ def on_message(client, userdata, message):
 
     try:
         data.append(json.loads(mes_decoded))
-        if len(data) > 10:
+        if len(data) > 5:
             data.pop(0)
             forward = all(sample['acceleration']['x'] > 70 for sample in data[-5:])
             up = all(sample['acceleration']['z'] < 980 for sample in data[-5:])
@@ -30,7 +30,7 @@ def on_message(client, userdata, message):
             idle = all(sample['acceleration']['x']< 50 
                        and sample['acceleration']['y'] < 50 
                        and sample['acceleration']['z'] > 990 
-                       and sample['acceleration']['z'] < 1030 for sample in data)
+                       and sample['acceleration']['z'] < 1030 for sample in data[-5:])
 
             if forward:
                 print("forward")
